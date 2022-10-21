@@ -1,6 +1,8 @@
 import os
 import sys
 
+numa_command = "numactl --cpunodebind=0 --membind=0 "
+
 class RunGraph:
     def __init__(self, stage, datasize, dataset):
         self.stage = stage
@@ -49,16 +51,16 @@ class RunGraph:
 
 def main():
     stage = "search"
-    Datasets = ["sift", "spacev"]
-    Datasize = [1, 10, 50, 100, 500]
-    Threads = [1]
+    Datasets = ["sift", "deep", "spacev"]
+    Datasize = [10]
+    Threads = [0]
     # Sub_graph = [1]
 
     os.system("cd build && make main")
     for datasize in Datasize:
         for dataset in Datasets:
             for thread in Threads:
-                command = "./main " + stage + " " + dataset + " " + str(datasize) + " " + str(thread) + " 1"
+                command = "./main " + stage + " " + dataset + " " + str(datasize) + " " + str(thread)
                 os.system("cd build && " + command)
 
     # run = RunGraph(stage, Datasize, Datasets)
