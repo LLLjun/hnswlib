@@ -85,9 +85,10 @@ class Process:
     # 在给定的recall下，不同配置（这里是线程）之间的相对QPS比值
     def plotMultiThreadQPS(self, recall_rate=0.90):
         Datasize = [10]
-        Dataset = ['sift', 'deep', 'spacev']
+        Dataset = ['sift', 'deep']
 
         figdir_name = self.plotInit('HNSW_MultiThread')
+        log_name = 'hnsw_cpu_core'
 
         for datasize in Datasize:
             # 把相同大小的不同数据集画在一起
@@ -98,8 +99,8 @@ class Process:
                 recall_rate = self.getRcByName(dataset)
                 unique_name = dataset + str(datasize) + 'm_rc' + str(self.topk)
                 # basefile_name = os.path.join(self.resultDir, 'hnsw_pf', unique_name + '.log')
-                basefile_name = os.path.join(self.resultDir, 'hnsw_cpu_core', unique_name + '_t1.log')
-                otherfile_prefix = os.path.join(self.resultDir, 'hnsw_cpu_core', unique_name + '_t')
+                basefile_name = os.path.join(self.resultDir, log_name, unique_name + '_t1.log')
+                otherfile_prefix = os.path.join(self.resultDir, log_name, unique_name + '_t')
                 range_list = []
                 for i in range(1, 7):
                     range_list.append(2 ** i)
@@ -134,7 +135,7 @@ class Process:
             plt.suptitle(suptitle, fontsize=self.title_size)
             # tight_layout调整大小的时候没有考虑suptitle，因此需要手动设置范围避免重叠
             plt.tight_layout(rect=[0, 0, 1, 0.95])
-            figfile_name = os.path.join(figdir_name, 'multithread_' + str(datasize) + 'm.png')
+            figfile_name = os.path.join(figdir_name, log_name + str(datasize) + 'm.png')
             plt.savefig(figfile_name)
 
     # QPS(Latency) - Recall 曲线
@@ -181,7 +182,7 @@ class Process:
                 plt.tight_layout(rect=[0, 0, 1, 0.95])
                 figfile_name = os.path.join(figdir_name, perf + '_' + str(datasize) + 'm.png')
                 plt.savefig(figfile_name)
-                
+
     def getRcByName(self, name):
         rc = None
         if name == 'sift':

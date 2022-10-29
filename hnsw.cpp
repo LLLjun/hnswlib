@@ -42,8 +42,11 @@ test_vs_recall(HierarchicalNSW<DTres, DTset>& appr_alg,
     size_t k = MapParameter["k"];
 
     vector<size_t> efs;
-    for (int i = 30; i <= 50; i += 10)
-        efs.push_back(i);
+#if R200
+    efs.push_back(200);
+#else
+    efs.push_back(53);
+#endif
 
     int column_map = 3;
 
@@ -59,26 +62,29 @@ test_vs_recall(HierarchicalNSW<DTres, DTset>& appr_alg,
         appr_alg.metric_hops_L = 0;
         appr_alg.metric_distance_computations = 0;
 
-        vector<vector<unsigned>> result(qsize);
-        for (vector<unsigned>& r: result)
-            r.resize(k, 0);
+        vector<priority_queue<pair<DTres, labeltype>>> search_return(qsize);
 
         Timer stopw = Timer();
 #pragma omp parallel for
         for (int qi = 0; qi < qsize; qi++) {
-            priority_queue<pair<DTres, labeltype>> res = appr_alg.searchKnn(massQ + vecdim * qi, k);
-#pragma omp critical
-            {
-                int i = 0;
-                while (!res.empty()){
-                    result[qi][i] = (unsigned) res.top().second;
-                    res.pop();
-                    i++;
-                }
+            search_return[qi] = appr_alg.searchKnn(massQ + vecdim * qi, k);
+        }
+        float time_us_per_query = stopw.getElapsedTimeus() / qsize;
+
+        // priority queue to vector
+        vector<vector<unsigned>> result(qsize, vector<unsigned>(k));
+        for (int qi = 0; qi < qsize; qi++) {
+            priority_queue<pair<DTres, labeltype>> res = search_return[qi];
+            int i = 0;
+            while (!res.empty()){
+                result[qi][i] = (unsigned) res.top().second;
+                res.pop();
+                i++;
+            }
+            if (i != k) {
+                printf("error, i = %d\n", i); exit(1);
             }
         }
-
-        float time_us_per_query = stopw.getElapsedTimeus() / qsize;
         float recall = comput_recall(result, massQA, qsize, k);
 
         cout << ef << "\t" << recall << "\t" << time_us_per_query << "\t";
@@ -291,6 +297,9 @@ void hnsw_impl(string stage, string using_dataset, size_t data_size_millions, si
 	size_t efConstruction = M * 10;
     size_t k = 10;
     size_t vecsize = data_size_millions * 1000000;
+#if R200
+    k = 200;
+#endif
 
     map<string, size_t> MapParameter;
     MapParameter["data_size_millions"] = data_size_millions;

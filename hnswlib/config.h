@@ -13,3 +13,6 @@
 #endif
 
 #define EVA_THREAD  true
+
+// CPU Scalability Test
+#define R200        false
